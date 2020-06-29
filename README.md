@@ -1,5 +1,5 @@
 # Lottery Ticket Hypothesis
-PyTorch implementation of the [Lottery Ticket Hypothesis][lottery]
+PyTorch implementation of the [Lottery Ticket Hypothesis][lottery].
 
 ## Pre-requisities
 Developed in Python `3.7`,
@@ -18,6 +18,12 @@ with all required packages.
 `main.py` trains a `LeNet`-esque classifier on MNIST.
 Run `python main.py -h` to see optional command line arguments.
 
+## Contributions
+Contributions are welcome.
+If opening a PR,
+ensure the code conforms to `black` formatting
+and `isort` import configurations.
+
 ## Project Organization
 
 ```
@@ -34,6 +40,9 @@ Run `python main.py -h` to see optional command line arguments.
 │
 ├── src                <- source code. Things imported into `main.py`.
 ```
+
+## License
+See the full [license](./LICENSE)
 
 
 [lottery]: https://arxiv.org/abs/1803.03635
