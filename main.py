@@ -23,67 +23,72 @@ def main(args):
 
     model.train()
 
-    prune_pc_per_round = 1 - args.prune_pc ** (1 / args.prune_rounds)
+    # Percentage to *prune* per round
+    prune_pc_per_round = 1 - (1 - args.prune_pc) ** (1 / args.prune_rounds)
 
-    for epoch in trange(args.epochs):
-        correct = 0
-        total = 0
+    for round in range(args.prune_rounds):
+        for epoch in trange(args.epochs):
+            correct = 0
+            total = 0
 
-        for data, targets in train_loader:
-            optim.zero_grad()
+            for data, targets in train_loader:
+                optim.zero_grad()
 
-            data = data.to(device)
-            targets = targets.to(device)
+                data = data.to(device)
+                targets = targets.to(device)
 
-            outputs = model(data)
-            loss = criterion(outputs, targets)
+                outputs = model(data)
+                loss = criterion(outputs, targets)
 
-            loss.backward()
-            optim.step()
+                loss.backward()
+                optim.step()
 
-            # Track performance stats
-            correct += outputs.size(0)
-            total += outputs.max(1)[1].eq(targets).sum().item()
+                # Track performance stats
+                correct += outputs.size(0)
+                total += outputs.max(1)[1].eq(targets).sum().item()
 
-        epoch_acc = 100 * total / correct
+            epoch_acc = 100 * total / correct
 
-    # TODO generalise this
-    parameters_to_prune = (
-        (model.features.first_conv, "weight"),
-        (model.features.second_conv, "weight"),
-        (model.classifier.first_linear, "weight"),
-        (model.classifier.second_linear, "weight"),
-        (model.classifier.third_linear, "weight"),
-    )
+        # TODO generalise this
+        parameters_to_prune = (
+            (model.features.first_conv, "weight"),
+            (model.features.second_conv, "weight"),
+            (model.classifier.first_linear, "weight"),
+            (model.classifier.second_linear, "weight"),
+            (model.classifier.third_linear, "weight"),
+        )
 
-    # Prune model
-    print(prune_pc_per_round)
-    prune.global_unstructured(
-        parameters_to_prune,
-        pruning_method=prune.L1Unstructured,
-        amount=prune_pc_per_round,
-    )
+        # Prune model
+        prune.global_unstructured(
+            parameters_to_prune,
+            pruning_method=prune.L1Unstructured,
+            amount=prune_pc_per_round,
+        )
 
-    # TODO generalise this process
-    pruned_parameters = float(
-        torch.sum(model.features.first_conv.weight != 0)
-        + torch.sum(model.features.second_conv.weight != 0)
-        + torch.sum(model.classifier.first_linear.weight != 0)
-        + torch.sum(model.classifier.second_linear.weight != 0)
-        + torch.sum(model.classifier.third_linear.weight != 0)
-    )
+        # TODO re-initialise lottery ticket weights
 
-    total_parameters = float(
-        model.features.first_conv.weight.nelement()
-        + model.features.second_conv.weight.nelement()
-        + model.classifier.first_linear.weight.nelement()
-        + model.classifier.second_linear.weight.nelement()
-        + model.classifier.third_linear.weight.nelement()
-    )
+        # TODO generalise this process
+        # Number of *unpruned* parameters
+        pruned_parameters = float(
+            torch.sum(model.features.first_conv.weight != 0)
+            + torch.sum(model.features.second_conv.weight != 0)
+            + torch.sum(model.classifier.first_linear.weight != 0)
+            + torch.sum(model.classifier.second_linear.weight != 0)
+            + torch.sum(model.classifier.third_linear.weight != 0)
+        )
 
-    print(f"Final accuracy: {epoch_acc:.3f}")
-    print(f"Model parameters: {pruned_parameters}")
-    print(f"Total parameters: {total_parameters}")
+        # Number of parameters in total (pruned and unpruned)
+        total_parameters = float(
+            model.features.first_conv.weight.nelement()
+            + model.features.second_conv.weight.nelement()
+            + model.classifier.first_linear.weight.nelement()
+            + model.classifier.second_linear.weight.nelement()
+            + model.classifier.third_linear.weight.nelement()
+        )
+
+        print(f"Final accuracy: {epoch_acc:.3f}")
+        print(f"Model parameters: {pruned_parameters}")
+        print(f"Total parameters: {total_parameters}")
 
 
 if __name__ == "__main__":
