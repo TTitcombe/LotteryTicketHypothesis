@@ -44,7 +44,9 @@ def main(args):
 
         epoch_acc = 100 * total / correct
 
+    total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(f"Final accuracy: {epoch_acc:.3f}")
+    print(f"Model parameters: {total_params}")
 
 
 if __name__ == "__main__":
@@ -52,9 +54,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "--lr", default=1e-3, type=float, help="Learning rate (default 1e-3)"
     )
-    parser.add_argument("--bs", default=8, type=int, help="Batch size (default 8)")
+    parser.add_argument("--bs", default=128, type=int, help="Batch size (default 128)")
     parser.add_argument(
-        "--epochs", default=100, type=int, help="Number of epochs (default 100)"
+        "--epochs", default=8, type=int, help="Number of epochs (default 8)"
     )
 
     args = parser.parse_args()
