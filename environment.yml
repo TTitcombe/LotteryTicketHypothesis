@@ -1,0 +1,20 @@
+name: lottery-ticket
+channels:
+  - conda-forge
+  - pytorch
+dependencies:
+  - python==3.7.*
+  - numpy
+  - pytorch
+  - torchvision
+  - cpuonly
+  - matplotlib
+# notebooks
+  - jupyter
+  - jupyterlab
+  - nodejs  # for jupyterlab build
+# code utility
+  - black
+  - isort
+  - tqdm
+  - pip >=19
