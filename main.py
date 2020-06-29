@@ -1,6 +1,7 @@
 import argparse
 
 import torch
+import torch.nn.utils.prune as prune
 import torchvision
 from tqdm import trange
 
@@ -21,6 +22,8 @@ def main(args):
     train_loader = torch.utils.data.DataLoader(train_data, batch_size=args.bs)
 
     model.train()
+
+    prune_pc_per_round = 1 - args.prune_pc ** (1 / args.prune_rounds)
 
     for epoch in trange(args.epochs):
         correct = 0
@@ -44,9 +47,43 @@ def main(args):
 
         epoch_acc = 100 * total / correct
 
-    total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    # TODO generalise this
+    parameters_to_prune = (
+        (model.features.first_conv, "weight"),
+        (model.features.second_conv, "weight"),
+        (model.classifier.first_linear, "weight"),
+        (model.classifier.second_linear, "weight"),
+        (model.classifier.third_linear, "weight"),
+    )
+
+    # Prune model
+    print(prune_pc_per_round)
+    prune.global_unstructured(
+        parameters_to_prune,
+        pruning_method=prune.L1Unstructured,
+        amount=prune_pc_per_round,
+    )
+
+    # TODO generalise this process
+    pruned_parameters = float(
+        torch.sum(model.features.first_conv.weight != 0)
+        + torch.sum(model.features.second_conv.weight != 0)
+        + torch.sum(model.classifier.first_linear.weight != 0)
+        + torch.sum(model.classifier.second_linear.weight != 0)
+        + torch.sum(model.classifier.third_linear.weight != 0)
+    )
+
+    total_parameters = float(
+        model.features.first_conv.weight.nelement()
+        + model.features.second_conv.weight.nelement()
+        + model.classifier.first_linear.weight.nelement()
+        + model.classifier.second_linear.weight.nelement()
+        + model.classifier.third_linear.weight.nelement()
+    )
+
     print(f"Final accuracy: {epoch_acc:.3f}")
-    print(f"Model parameters: {total_params}")
+    print(f"Model parameters: {pruned_parameters}")
+    print(f"Total parameters: {total_parameters}")
 
 
 if __name__ == "__main__":
@@ -57,6 +94,18 @@ if __name__ == "__main__":
     parser.add_argument("--bs", default=128, type=int, help="Batch size (default 128)")
     parser.add_argument(
         "--epochs", default=8, type=int, help="Number of epochs (default 8)"
+    )
+    parser.add_argument(
+        "--prune_pc",
+        default=0.2,
+        type=float,
+        help="Percentage of parameters to prune over the course of the training process (default 0.2)",
+    )
+    parser.add_argument(
+        "--prune_rounds",
+        default=5,
+        type=int,
+        help="Number of rounds of pruning to perform (default 5)",
     )
 
     args = parser.parse_args()
