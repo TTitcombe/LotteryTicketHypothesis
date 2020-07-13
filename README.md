@@ -15,8 +15,26 @@ to create an environment,
 with all required packages.
 
 ## To Run
-`main.py` trains a `LeNet`-esque classifier on MNIST.
-Run `python main.py -h` to see optional command line arguments.
+`main.py` trains a `LeNet`-esque classifier on MNIST
+with several rounds of pruning.
+
+```bash
+usage: Finding Lottery Tickets on an MNIST classifier [-h] [--lr LR] [--bs BS]
+                                                      [--epochs EPOCHS]
+                                                      [--prune_pc PRUNE_PC]
+                                                      [--prune_rounds PRUNE_ROUNDS]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --lr LR               Learning rate (default 1e-3)
+  --bs BS               Batch size (default 128)
+  --epochs EPOCHS       Number of epochs (default 8)
+  --prune_pc PRUNE_PC   Percentage of parameters to prune over the course of
+                        the training process (default 0.2)
+  --prune_rounds PRUNE_ROUNDS
+                        Number of rounds of pruning to perform (default 5)
+
+```
 
 ## Contributions
 Contributions are welcome.
