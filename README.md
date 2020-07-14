@@ -1,5 +1,6 @@
 # Lottery Ticket Hypothesis
 PyTorch implementation of the [Lottery Ticket Hypothesis][lottery].
+This implementation uses PyTorch's `prune` module.
 
 ## Pre-requisities
 Developed in Python `3.7`,
@@ -42,6 +43,11 @@ If opening a PR,
 ensure the code conforms to `black` formatting
 and `isort` import configurations.
 
+Feel free to open an issue
+to ask a question,
+raise a bug,
+or request new features.
+
 ## Project Organization
 
 ```
@@ -58,6 +64,11 @@ and `isort` import configurations.
 │
 ├── src                <- source code. Things imported into `main.py`.
 ```
+
+## TODO
+- [X] Implement basic pruning
+- [ ] Recreate experiments from the paper
+- [ ] Use tensorboard to visualise model and pruning progress
 
 ## License
 See the full [license](./LICENSE)
