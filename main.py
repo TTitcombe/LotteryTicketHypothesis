@@ -10,17 +10,6 @@ from tqdm import trange
 from src import LeNet, mnist_train_transform
 
 
-def make_prune_permanent(model) -> torch.nn.Module:
-    # TODO generalise this
-    prune.remove(model.features.first_conv, "weight")
-    prune.remove(model.features.second_conv, "weight")
-    prune.remove(model.classifier.first_linear, "weight")
-    prune.remove(model.classifier.second_linear, "weight")
-    prune.remove(model.classifier.third_linear, "weight")
-
-    return model
-
-
 def prune_model(model, prune_pc) -> Tuple[torch.nn.Module, float]:
     # TODO generalise this
     parameters_to_prune = (
@@ -47,9 +36,6 @@ def prune_model(model, prune_pc) -> Tuple[torch.nn.Module, float]:
             + torch.sum(model.classifier.second_linear.weight != 0)
             + torch.sum(model.classifier.third_linear.weight != 0)
         )
-
-    # Make pruning permanent
-    #model = make_prune_permanent(model)
 
     return model, n_pruned_parameters
 
@@ -85,15 +71,6 @@ def main(args):
 
     for round in range(args.prune_rounds):
         print(f"\nPruning round {round} of {args.prune_rounds}")
-        # Rest model weights
-
-        """if round != 0:
-            for parameter_name, parameter_values in model.named_parameters():
-                print(parameter_name)
-                non_zero_values = (parameter_values != 0)
-                #initial_weights[parameter_name] *= non_zero_values"""
-
-            #print(initial_weights)
 
         for epoch in trange(args.epochs):
             correct = 0
@@ -119,24 +96,24 @@ def main(args):
 
         # Prune model
         model, n_pruned_parameters = prune_model(model, prune_pc_per_round)
-        pruned_state_dict = model.state_dict()
 
         # Re-initialise lottery ticket weights
-        for parameter_name, parameter_values in initial_weights.items():
-            if "bias" in parameter_name:
-                continue
+        pruned_state_dict = model.state_dict()
 
+        for parameter_name, parameter_values in initial_weights.items():
+            # Pruned weights are called <parameter_name>_orig
             augmented_parameter_name = parameter_name + "_orig"
+
             if augmented_parameter_name in pruned_state_dict:
                 pruned_state_dict[augmented_parameter_name] = parameter_values
-            """weight_mask_value = pruned_state_dict[parameter_name]
-            non_zero_values = (weight_mask_value != 0).float()
-            print(non_zero_values.sum().item())
-            pruned_weights[parameter_name] = parameter_values * non_zero_values
-            non_zero_values2 = (pruned_weights[parameter_name] != 0).float()"""
+            else:
+                # Parameter name has not changed
+                # e.g. bias or weights from non-pruned layer
+                pruned_state_dict[parameter_name] = parameter_values
+
         model.load_state_dict(pruned_state_dict)
 
-        print(f"Final accuracy: {epoch_acc:.3f}")
+        print(f"Model accuracy: {epoch_acc:.3f}%")
         print(f"Model parameters: {n_pruned_parameters}/{total_parameters}")
 
 
